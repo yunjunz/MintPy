@@ -414,6 +414,25 @@ SEN = {
 }
 
 
+##--------------------  S-band  --------------------##
+
+# HJ-1C (Huan Jing-1C)
+# https://www.eoportal.org/satellite-missions/hj-1
+# Liu et al. (2014, J Radar), doi: 10.3724/SP.J.1300.2013.13050
+# spatial resolution: 10 m (4 looks)
+# swath width: 100 km
+HJ1C = {
+    # orbit
+    'altitude'                   : 502e3,     # m
+    'orbit_inclination'          : 97.3,      # deg
+    'repeat_cycle'               : 31,        # day
+    # sar / antenna
+    'carrier_frequency'          : 3.13e9,    # Hz
+    'pulse_repetition_frequency' : 2600,      # Hz, 2600-3700
+    'chirp_bandwidth'            : 60.0e6,    # Hz
+}
+
+
 ##--------------------  L-band  --------------------##
 
 # Seasat
