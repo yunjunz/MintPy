@@ -828,6 +828,8 @@ def load_data(inps):
     iDict = read_subset_box(iDict)
 
     # geometry in geo / radar coordinates
+    # Note: hardcode `lzf` HDF compression for a significantly smaller file size
+    #   without much impact on the performance
     geom_dset_name2template_key = {
         **GEOM_DSET_NAME2TEMPLATE_KEY,
         **IFG_DSET_NAME2TEMPLATE_KEY,

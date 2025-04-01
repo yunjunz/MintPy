@@ -278,6 +278,9 @@ ICEYE = {
 ##--------------------  C-band  --------------------##
 
 # ERS-1/2
+# active date:
+#   ERS-1: 1991-07-17 to 2000-03-10
+#   ERS-2: 1995-04-21 to 2011-09-05
 # from Table 2 in Jung et al. (2014)
 # from Imaging Radar class by Howard Zebker, 2021.
 # https://www.esa.int/esapub/bulletin/bullet83/duc83.htm
@@ -302,6 +305,7 @@ ERS = {
 }
 
 # Envisat
+# active date: 2002-03-01 to 2012-04-08
 # from Table 2 in Jung et al. (2014)
 # https://earth.esa.int/eogateway/missions/envisat/description
 # https://www.eoportal.org/satellite-missions/envisat#asar-advanced-sar
