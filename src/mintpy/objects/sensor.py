@@ -197,6 +197,22 @@ def get_unavco_mission_name(meta_dict):
 # JERS       : SNR = 14 dB from https://directory.eoportal.org/web/eoportal/satellite-missions/j/jers-1
 
 
+##--------------------  Ka-band  -------------------##
+# SWOT
+# KaRIn (Ka-band Radar Interferometer) On-Board Processor (OBP) ATBD
+SWOT = {
+    # orbit
+    'altitude'                   : 906e3,     # m
+    'orbit_inclination'          : 78,        # deg
+    # sar / antenna
+    'carrier_frequency'          : 35.75e9,   # Hz
+    'pulse_repetition_frequency' : 4420,      # Hz
+    'chirp_bandwidth'            : 200e6,     # Hz
+    'sampling_frequency'         : 300e6,     # Hz
+}
+
+
+
 ##--------------------  X-band  --------------------##
 # TerraSAR-X stripmap mode in single polarization
 # from Table 1 in Jung et al. (2014)
@@ -359,6 +375,7 @@ RSAT2 = {
 
 # Radarsat Constellation Mission
 # https://www.asc-csa.gc.ca/eng/satellites/radarsat/technical-features/radarsat-comparison.asp
+# Cote et al. (2021) at https://ieeexplore.ieee.org/document/9472534
 RCM = {
     # orbit
     'altitude'                   : 600.5e3,   # m, mean value, 586-615 km
@@ -368,6 +385,8 @@ RCM = {
     'carrier_frequency'          : 5.405e9,   # Hz
     'antenna_length'             : 6.75,      # m
     'antenna_width'              : 1.38,      # m
+    'chirp_bandwidth'            : 100e6,     # Hz
+    'noise_equivalent_sigma_zero': -19,       # dB, [-17, -25] for all modes
 }
 
 # GaoFen-3
@@ -383,12 +402,13 @@ GF3 = {
     # sar / antenna
     'carrier_frequency'          : 5.4e9,     # Hz
     'antenna_length'             : 15,        # m
-    'antenna_width'              : 1.5,       # m
+    'antenna_width'              : 1.232,     # m
     'pulse_repetition_frequency' : 1412.18,   # Hz
     'chirp_bandwidth'            : 60.00e6,   # Hz
-    'sampling_frequency'         : 533.33e6,  # Hz
+    'sampling_frequency'         : 533.33e6,  # Hz, IF sampling
     'azimuth_pixel_size'         : 4.77,      # m, FSII mode
     'range_pixel_size'           : 2.25,      # m, FSII mode
+    'noise_equivalent_sigma_zero': -19.5,     # dB, -19.5/-21.3 dB for P,UF,F,WF,Q,WV/S,NS,WS,G,WQ,E modes
 }
 
 # Sentinel-1 Interferometric Wide (IW / TOPS) swath mode
@@ -398,15 +418,17 @@ GF3 = {
 # reference:
 #   1. Table 2 & Fig. 5d in Jung et al. (2014)
 #   2. Table 3-1 & 7-5 in https://sentinel.esa.int/documents/247904/1877131/Sentinel-1-Product-Definition
+#   3. Fig. 4 in Miranda et al. (2016) at https://doi.org/10.1016/j.procs.2016.09.247
+#   4. https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
 SEN = {
     # orbit
     'altitude'                   : 705e3,     # m, mean value
     'orbit_inclination'          : 98.18,     # deg
     'repeat_cycle'               : 12,        # day, single satellite
     # sar / antenna
-    'carrier_frequency'          : 5.405e9,   # Hz
+    'carrier_frequency'          : 5.405e9,   # Hz, 5.55 cm wavelength
     'antenna_length'             : 12.3,      # m
-    'antenna_width'              : 0.82,      # m
+    'antenna_width'              : 0.821,      # m
     'doppler_bandwidth'          : 380,       # Hz
     'pulse_repetition_frequency' : 1717.13,   # Hz, based on real data; 1000-3000 (programmable)
     'chirp_bandwidth'            : 56.50e6,   # Hz
@@ -417,6 +439,7 @@ SEN = {
     'IW1' : {'range_resolution' : 2.7, 'azimuth_resolution': 22.5},
     'IW2' : {'range_resolution' : 3.1, 'azimuth_resolution': 22.7},
     'IW3' : {'range_resolution' : 3.5, 'azimuth_resolution': 22.6},
+    'noise_equivalent_sigma_zero': -22,       # dB
 }
 
 
@@ -425,6 +448,7 @@ SEN = {
 # HJ-1C (Huan Jing-1C)
 # https://www.eoportal.org/satellite-missions/hj-1
 # Liu et al. (2014, J Radar), doi: 10.3724/SP.J.1300.2013.13050
+# Zhang et al. (2014, J Radar), doi: https://doi.org/10.3724/SP.J.1300.2014.13135
 # spatial resolution: 10 m (4 looks)
 # swath width: 100 km
 HJ1C = {
@@ -436,6 +460,23 @@ HJ1C = {
     'carrier_frequency'          : 3.13e9,    # Hz
     'pulse_repetition_frequency' : 2600,      # Hz, 2600-3700
     'chirp_bandwidth'            : 60.0e6,    # Hz
+    'noise_equivalent_sigma_zero': -22,       # dB
+}
+
+# NISAR S-band
+# https://nisar.jpl.nasa.gov/system/documents/files/26_NISAR_FINAL_9-6-19.pdf
+NISAR_S = {
+    # orbit
+    'altitude'                   : 747e3,     # m
+    'orbit_inclination'          : 98.4,      # degree
+    'repeat_cycle'               : 12,        # day
+    # sar / antenna
+    'carrier_frequency'          : 3.2e9,     # Hz
+    'antenna_radius'             : 12,        # m
+    'pulse_repetition_frequency' : 2200,      # Hz
+    'chirp_bandwidth'            : 75e6,      # Hz
+    'azimuth_resolution'         : 7,         # m
+    'noise_equivalent_sigma_zero': -20,       # dB (threshold), -25 dB (baseline)
 }
 
 
@@ -460,6 +501,8 @@ SEASAT = {
 # JERS-1
 # from Table 3 in Jung et al. (2014)
 # https://www.eoportal.org/satellite-missions/jers-1
+# https://www.eorc.jaxa.jp/ALOS/en/jers-1/sensor/sar_e.htm
+# swath_width: 75 km
 JERS = {
     # orbit
     'altitude'                   : 568e3,     # m, mean value
@@ -480,6 +523,7 @@ JERS = {
 # ALOS PALSAR FBS (fine beam single polarization) mode
 # from Table 3 in Jung et al. (2014)
 # https://www.eorc.jaxa.jp/ALOS/en/alos/a1_about_e.htm
+# https://www.eorc.jaxa.jp/ALOS/en/alos/sensor/palsar_e.htm
 ALOS = {
     # orbit
     'altitude'                   : 691.65e3,  # m, mean value
@@ -488,16 +532,18 @@ ALOS = {
     # sar / antenna
     'carrier_frequency'          : 1.270e9,   # Hz
     'antenna_length'             : 8.9,       # m
+    'antenna_width'              : 3.1,       # m
     'doppler_bandwidth'          : 1700,      # Hz
     'pulse_repetition_frequency' : 2160,      # Hz
-    'chirp_bandwidth'            : 28.00e6,   # Hz
+    'chirp_bandwidth'            : 28.00e6,   # Hz, 14/28
     'sampling_frequency'         : 32.00e6,   # Hz
     'azimuth_pixel_size'         : 3.5,       # m
     'ground_range_pixel_size'    : 7.4,       # m
     'range_pixel_size' : {
         'stripmap_FBD' : 9.37,                # m
         'stripmap_FBS' : 4.68,                # m
-    }
+    },
+    'noise_equivalent_sigma_zero': -23,       # dB, -23/-25 dB for swath width 70/60km
 }
 
 # ALOS-2 PALSAR-2 stripmap ultra-fine single polarization mode
@@ -530,16 +576,24 @@ ALOS2 = {
         'stripmap_ultrafine'     : 1.43,      # m
         'stripmap_highsensitive' : 2.86,      # m
         'scansar_normal'         : 8.58,      # m
-    }
+    },
+    'noise_equivalent_sigma_zero': -24,       # dB, -24/-26/-28
 }
 
 # ALOS-4 PALSAR-3
 # https://www.eorc.jaxa.jp/ALOS/en/alos-4/a4_about_e.htm
+# https://www.eorc.jaxa.jp/ALOS/en/alos-4/a4_sensor_e.htm
+# using stripmap 200km@3m mode as reference
 ALOS4 = {
     # orbit (same as ALOS-2)
     'altitude'                   : 628e3,     # m, mean value
     'orbit_inclination'          : 97.9,      # deg
     'repeat_cycle'               : 14,        # day, (15-3/14 rev/day)
+    # sar / antenna
+    'carrier_frequency'          : 1257.5e6,  # Hz (spotlight, 3m SM), 1236.5/1257.5/1278.5 MHz
+    'chirp_bandwidth'            : 84e6,      # Hz, 84/42/28
+    'range_resolution'           : 3,         # m
+    'noise_equivalent_sigma_zero': -20,       # dB, -20/-24/-28
 }
 
 # SAOCOM-1A/B stripmap
@@ -556,6 +610,7 @@ SAOCOM = {
     'antenna_length'             : 10,        # m
     'pulse_repetition_frequency' : 4545,      # Hz
     'sampling_frequency'         : 50.0e6,    # Hz
+    'noise_equivalent_sigma_zero': -28,       # dB (single/dual pol modes), -34 dB for quad pol modes
 }
 
 # LuTan-1 (stripmap mode)
@@ -578,6 +633,7 @@ LT1 = {
     'azimuth_resolution'         : 7.15,      # m
     'range_pixel_size'           : 1.67,      # m
     'range_resolution'           : 2.50,      # m
+    'noise_equivalent_sigma_zero': -28,       # dB
 }
 
 # UAVSAR-L
@@ -598,7 +654,7 @@ UAV_L = {
     # orbit
     'altitude'                   : 13.8e3,    # m, 2 - 18 km
     # sar / antenna
-    'carrier_frequency'          : 1.2575e9,  # Hz
+    'carrier_frequency'          : 1.2575e9,  # Hz, 23.70 cm wavelength
     'antenna_length'             : 1.6,       # m
     'antenna_width'              : 0.5,       # m
     'chirp_bandwidth'            : 80e6,      # Hz
@@ -606,6 +662,7 @@ UAV_L = {
     'range_pixel_size'           : 1.67,      # m
     'azimuth_resolution'         : 0.8,       # m
     'azimuth_pixel_size'         : 0.6,       # m
+    'noise_equivalent_sigma_zero': -50,       # dB
 }
 
 # NISAR
@@ -624,7 +681,8 @@ NISAR_L = {
         '24MHz'                  : 6.25,      # m
         '44MHz'                  : 3.41,      # m
         '80MHz'                  : 1.87,      # m
-    }
+    },
+    'noise_equivalent_sigma_zero': -25,       # dB
 }
 
 
@@ -646,6 +704,7 @@ BIOMASS = {
     'chirp_bandwidth'            : 6e6,       # Hz
     'range_pixel_size'           : 25,        # m
     'azimuth_pixel_size'         : 8,         # m
+    'noise_equivalent_sigma_zero': -27,       # dB (threshold), -30 dB (goal)
 }
 
 
