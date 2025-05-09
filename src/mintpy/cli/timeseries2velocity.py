@@ -42,6 +42,10 @@ EXAMPLE = """example:
   timeseries2velocity.py timeseries_ERA5_demErr.h5 --uq residue
   timeseries2velocity.py timeseries_ERA5_demErr.h5 --uq covariance --ts-cov timeseriesCov.h5
   timeseries2velocity.py timeseries_ERA5_demErr.h5 --uq bootstrap
+
+  # remove specific time function components
+  timeseries2velocity.py timeseries_ERA5_demErr.h5 --periodic 1 --step 20170910 --save-res --res-file timeseriesResidual.h5
+  timeseries2velocity.py timeseries_ERA5_demErr.h5 --periodic 1 --step 20170910 --save-res --rm-timefun periodic --res-file timeseries_ERA5_demErr_periodic.h5
 """
 
 DROP_DATE_TXT = """exclude_date.txt:
@@ -107,6 +111,9 @@ def create_parser(subparsers=None):
                        help='Save the residual displacement time-series to HDF5 file.')
     resid.add_argument('--res-file', '--residual-file', dest='res_file', default='timeseriesResidual.h5',
                        help='Output file name for the residual time-series file (default: %(default)s).')
+    resid.add_argument('--rm-timefun', '--remove-time-functions', dest='rm_timefuns', nargs='*', default=['all'],
+                       choices={'all', 'polynomial' , 'periodic', 'step', 'polyline', 'exp', 'log'},
+                       help='Specify the time functions to be removed from the input (default: %(default)s).')
 
     # computing
     parser = arg_utils.add_memory_argument(parser)
