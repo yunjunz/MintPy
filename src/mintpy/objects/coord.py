@@ -347,8 +347,8 @@ class coordinate:
             rg_step_deg = 180./np.pi * rg_step / (self.earth_radius * np.cos(lat_c * np.pi/180.))
 
             az, rg = np.zeros(lat.shape), np.zeros(lat.shape)
-            x_factor = 10
-            y_factor = 10
+            x_factor = 4
+            y_factor = 4
 
             # search the overlap area of buffer in x/y direction and use the cross center
             if lat.size == 1:
@@ -409,8 +409,8 @@ class coordinate:
                 x_factor = 2 * np.ceil(abs(lut.lon_step) / rg_step)
                 y_factor = 2 * np.ceil(abs(lut.lat_step) / az_step)
             except:
-                x_factor = 10
-                y_factor = 10
+                x_factor = 4
+                y_factor = 4
 
             if 'SUBSET_XMIN' in self.src_metadata.keys():
                 rg += int(self.src_metadata['SUBSET_XMIN'])
