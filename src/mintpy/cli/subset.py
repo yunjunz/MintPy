@@ -33,8 +33,10 @@ EXAMPLE = """example:
   subset.py geo_velocity.h5 -l 32.2 33.5  --outfill-nan
   subset.py Mask.h5 -x 500 3500 --outfill 0
 
-  # "tight" subset for geocoded lookup table larger than data file
-  subset.py geomap_4rlks.trans --tight
+  # crop radar-coded file using lat/lon
+  # Note: recommend adding all files in one command to ensure consistent output file size
+  # because it might be different due to the not strictly accurate geo2radar coordinate conversion
+  subset.py timeseries_ERA5_demErr.h5 inputs/geometryRadar.h5 --lookup inputs/geometryRadar.h5 --lat 30.50 30.52 --lon 120.30 120.32
 """
 
 def create_parser(subparsers=None):
