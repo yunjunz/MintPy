@@ -199,7 +199,7 @@ def read_subset_box(iDict):
     if geo_box is not None:
         pix_box = coord.bbox_geo2radar(geo_box)
         pix_box = coord.check_box_within_data_coverage(pix_box)
-        print(f'input bounding box of interest in lalo: {geo_box}')
+        print(f'input bounding box of interest in lat/lon: {geo_box}')
     print(f'box to read for datasets in y/x: {pix_box}')
 
     # Get box for geocoded lookup table (for gamma/roipac)

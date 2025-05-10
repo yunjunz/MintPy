@@ -347,8 +347,8 @@ class coordinate:
             rg_step_deg = 180./np.pi * rg_step / (self.earth_radius * np.cos(lat_c * np.pi/180.))
 
             az, rg = np.zeros(lat.shape), np.zeros(lat.shape)
-            x_factor = 10
-            y_factor = 10
+            x_factor = 10 if int(self.src_metadata['WIDTH']) >= 300 else 5
+            y_factor = 10 if int(self.src_metadata['LENGTH']) >= 300 else 5
 
             # search the overlap area of buffer in x/y direction and use the cross center
             if lat.size == 1:
