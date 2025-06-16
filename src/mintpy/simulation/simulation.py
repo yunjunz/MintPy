@@ -28,15 +28,12 @@ SPEED_OF_LIGHT = 299792458   # m/s
 ############################ Deformation Time-series ############################
 def velocity2timeseries(date_list, vel=0.03, display=False):
     '''Simulate displacement time-series from linear velocity
-    Inputs:
-        date_list - list of string in YYYYMMDD or YYMMDD format
-        vel        - float, velocity in meter per year
-        display    - bool, display simulation or not
-    Output:
-        ts         - 2D np.array in size of (date_num,1), displacement time-series in m
-    Example:
-        date_list = pnet.read_baseline_file('bl_list.txt')[0]
-        ts0 = simulate_timeseries(date_list, vel=0.03, display=True)
+    Parameters: date_list - list of string in YYYYMMDD or YYMMDD format
+                vel       - float, velocity in meter per year
+                display   - bool, display simulation or not
+    Returns:    ts        - 2D np.ndarray in size of (date_num,1), displacement time-series in m
+    Example:    date_list = pnet.read_baseline_file('bl_list.txt')[0]
+                ts0 = simulate_timeseries(date_list, vel=0.03, display=True)
     '''
     tbase_list = ptime.date_list2tbase(date_list)[0]
     ts = vel / 365.25 * np.array(tbase_list)
@@ -170,12 +167,27 @@ def timeseries2ifgram(ts_sim, date_list, date12_list, wvl=0.055, display=False, 
     return ifgram_sim
 
 
-def simulate_network(ts_sim, date12_list, decor_day, coh_resid, L=75, num_repeat=int(1e4),
-                     baseline_file='bl_list.txt', sensor_name='Sen', inc_angle=33.4):
+def simulate_network(ts_sim, date12_list, decor_day, coh_resid, orbit_tube=200,
+                     sensor_name='Sen', inc_angle=33.4, L=75, num_repeat=int(1e4)):
     """Simulate the InSAR stack for one pixel, including:
         simulated coherence --> decorrelation noise
         simulated ifgram phase with / without decorrelation noise
-        estimated coherence"""
+        estimated coherence.
+
+    Parameters: ts_sim      - 1D np.ndarray, simulated displacement time-series in m.
+                date12_list - list(str), pairs info in YYYYMMDD_YYYYMMDD format
+                decor_day   - float, coherence decorrelation time in days
+                coh_resid   - float, long term coherence
+                orbit_tube  - float, satellite orbital tube in diameter
+                sensor_name - str, SAR sensor name
+                inc_angle   - float, LOS incidence angle in degrees
+                L           - int, number of multilooking
+                num_repeat  - int, number of repetitions
+    Returns:    ifgram_est  - 2D np.ndarray, simulated obs  interferometric phases
+                coh_est     - 2D np.ndarray, simulated obs  interferometric coherence
+                ifgram_sim  - 1D np.ndarray, simulated true interferometric phases
+                coh_sim     - 1D np.ndarray, simulated true interferometric coherence
+    """
     # simulated (true) phase
     m_dates = [i.split('_')[0] for i in date12_list]
     s_dates = [i.split('_')[1] for i in date12_list]
@@ -183,13 +195,17 @@ def simulate_network(ts_sim, date12_list, decor_day, coh_resid, L=75, num_repeat
     wvl = SPEED_OF_LIGHT / sensor.SENSOR_DICT[sensor_name.lower()]['carrier_frequency']
     ifgram_sim = timeseries2ifgram(ts_sim, date_list, date12_list, wvl=wvl, display=False)
 
+    # simulate perpendicular baseline
+    pbase_list = list((rng.random(len(date12_list), dtype=np.float32) - 0.5) * orbit_tube)
+
     # simulated (true) coherence
-    coh_sim = pnet.simulate_coherence(date12_list,
-                                      baseline_file=baseline_file,
-                                      sensor_name=sensor_name,
-                                      inc_angle=inc_angle,
-                                      decor_time=decor_day,
-                                      coh_resid=coh_resid)
+    coh_sim = pnet.simulate_coherence(
+        date12_list, pbase_list,
+        coh_delay_time=decor_day,
+        coh_inf=coh_resid,
+        sensor_name=sensor_name,
+        inc_angle=inc_angle,
+    )
 
     # simulated (estimated) phase
     decor_noise = coherence2decorrelation_phase(coh_sim, L=int(L), num_repeat=num_repeat)
@@ -202,14 +218,16 @@ def simulate_network(ts_sim, date12_list, decor_day, coh_resid, L=75, num_repeat
 
 
 def estimate_coherence(ifgram, L=20, win_size=25):
-    """Estimate coherence based on phase variance
+    """Estimate coherence based on phase variance.
+
     Reference:
       Rodriguez and Martin, 1992;
       Agram and Simons, 2015.
-    Parameters: phase    : 2D np.array in size of (num_ifgram, num_repeat)
-                L        : int, number of looks used to determine the phase PDF
-                win_size : int, number of samples used to estimate phase variance
-    Returns:    coh_est : 1D np.array in size of (num_ifgram,)
+
+    Parameters: phase    - 2D np.array in size of (num_ifgram, num_repeat)
+                L        - int, number of looks used to determine the phase PDF
+                win_size - int, number of samples used to estimate phase variance
+    Returns:    coh_est  - 1D np.array in size of (num_ifgram,)
     """
     idx = np.random.choice(ifgram.shape[1], size=win_size)
     ifgram_diff = ifgram[:,idx]
@@ -263,11 +281,11 @@ def check_board(water_mask, grid_step=100, scale=1., display=True):
 
 def add_unw_err2ifgram(ifgram, percentage=0.1, Nmax=2, print_msg=True):
     """Add unwrapping error to interferometric phase
-    Parameters: ifgram     : 1D / 2D np.array in size of (num_ifgram, num_pixel) in float32
-                percentage : float in [0, 1], percentage of interferograms with unwrapping errors
-                Nmax       : int, maximum integer numbers of cycles of the added unwrapping errors
-    Returns:    ifgram_err : 1D / 2D np.array in size of (num_ifgram, num_pixel) in float32
-                idx_ifg_err : list of index, indicating interferograms with unwrapping errors
+    Parameters: ifgram      - 1D / 2D np.array in size of (num_ifgram, num_pixel) in float32
+                percentage  - float in [0, 1], percentage of interferograms with unwrapping errors
+                Nmax        - int, maximum integer numbers of cycles of the added unwrapping errors
+    Returns:    ifgram_err  - 1D / 2D np.array in size of (num_ifgram, num_pixel) in float32
+                idx_ifg_err - list of index, indicating interferograms with unwrapping errors
     """
     Nlist = np.hstack((np.arange(Nmax)+1, -1*np.arange(Nmax)-1))
     num_ifg_err = int(len(ifgram) * percentage)
