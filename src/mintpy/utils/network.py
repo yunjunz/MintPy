@@ -187,6 +187,11 @@ def get_date12_list(fname, dropIfgram=False):
 def critical_perp_baseline(sensor_name, inc_angle=30, print_msg=False):
     """Calculate the critical Perpendicular Baseline for each satellite.
 
+    Reference:
+        1. Equation (18) in Zebker & Villasenor (1992), but there is a typo there:
+           in the denominator, it should be cos(theta), not cos^2(theta)
+        2. Equation (4.4.11) in Hanssen (2001).
+
     Parameters: sensor_name - str, SAR sensor name
                 inc_angle   - float, LOS incidence angle in degrees
     Returns:    bperp_crit  - float, critical perpendicular baseline in meters
@@ -208,22 +213,21 @@ def critical_perp_baseline(sensor_name, inc_angle=30, print_msg=False):
         'jers': 688849,
     }[sensor_name]
     wvl = SPEED_OF_LIGHT / sensor.SENSOR_DICT[sensor_name]['carrier_frequency']
-    range_bandwidth = sensor.SENSOR_DICT[sensor_name]['chirp_bandwidth']
+    range_bw = sensor.SENSOR_DICT[sensor_name]['chirp_bandwidth']
 
     # calculate critical perpendicular baseline
-    bperp_crit = wvl * (range_bandwidth / SPEED_OF_LIGHT) * near_range * np.tan(np.deg2rad(inc_angle))
+    bperp_crit = wvl * (range_bw / SPEED_OF_LIGHT) * near_range * np.tan(np.deg2rad(inc_angle))
     print(f'critical perpendicular baseline: {bperp_crit} m') if print_msg else None
 
     return bperp_crit
 
 
 def calculate_doppler_overlap(dop_a, dop_b, bandwidth_az):
-    """Calculate Overlap Percentage of Doppler frequency in azimuth direction
-    Inputs:
-        dop_a/b      : np.array of 3 floats, doppler frequency
-        bandwidth_az : float, azimuth bandwidth
-    Output:
-        dop_overlap  : float, doppler frequency overlap between a & b.
+    """Calculate Overlap Percentage of Doppler frequency in azimuth direction.
+
+    Parameters: dop_a/b      - np.array of 3 floats, doppler frequency
+                bandwidth_az - float, azimuth bandwidth
+    Returns:    dop_overlap  - float, doppler frequency overlap between a & b.
     """
     # Calculate mean Doppler difference between a and b
     no_of_rangepix = 5000
@@ -235,174 +239,114 @@ def calculate_doppler_overlap(dop_a, dop_b, bandwidth_az):
         ddiff[i] = abs(da - db)
     ddiff_mean = np.mean(ddiff)
 
-    #dopOverlap_prf = bandwidth_az - ddiff
-    #dopOverlap_percent = np.mean(dopOverlap_prf / bandwidth_az * 100)
-    ##overlapLessthanZero = np.nonzero(dopOverlap_percent < 0)
-    #dopOverlap_percent = np.mean(dopOverlap_percent)
-    # return dopOverlap_percent
-
     # Doppler overlap
     dop_overlap = (bandwidth_az - ddiff_mean) / bandwidth_az
     return dop_overlap
 
 
-def simulate_coherence_v2(date12_list, decor_time=200.0, coh_resid=0.2, inc_angle=40,
-                          SNR=22, sensor_name='Sen', display=False):
-    """Simulate coherence version 2 (without using bl_list.txt file).
-    Parameters: date12_list - list of string in YYYYMMDD_YYYYMMDD format, indicating pairs configuration
-                decor_time  - float, decorrelation rate in days, time for coherence to drop to 1/e of its initial value
-                coh_resid   - float, long-term coherence, minimum attainable coherence value
-                inc_angle   - float, incidence angle in degrees
-                sensor_name - string, SAR sensor name
-                SNR         - float, signal-to-noise ratio in dB
-                              NESZ = -22 dB from Table 1 in https://sentinels.copernicus.eu/web/sentinel
-                display     - bool, display result as matrix or not
-    Returns:    coh         - 2D np.array in size of (ifgram_num)
+def simulate_coherence(date12_list, pbase_list=None, coh_decay_time=200, coh_inf=0.2,
+                       sensor_name='LT1', inc_angle=30, orbit_tube=350, SNR=19.5,
+                       display=False):
+    """Simulate the spatial coherence of an interferogram stack.
+
+    References:
+        Guarnieri, A. M. (2013), Introduction to RADAR, POLIMI, Milano, Italy.
+        Zebker, H. A., & Villasenor, J. (1992). Decorrelation in interferometric radar echoes.
+            IEEE-TGRS, 30(5), 950-959.
+        Hanssen, R. F. (2001). Radar interferometry: data interpretation and error analysis
+            (Vol. 2). Dordrecht, Netherlands: Kluwer Academic Pub.
+        Morishita, Y., & Hanssen, R. F. (2015). Temporal decorrelation in L-, C-, and X-band
+            satellite radar interferometry for pasture on drained peat soils. IEEE-TGRS, 53(2),
+            1096-1104.
+        Parizzi, A., Cong, X., & Eineder, M. (2009). First Results from Multifrequency
+            Interferometry. A comparison of different decorrelation time constants at L, C,
+            and X Band. ESA Scientific Publications(SP-677), 1-5.
+
+    Parameters: date12_list    - list(string) in YYYYMMDD_YYYYMMDD format
+                pbase_list     - list(float), perpendicular baseline in meters
+                coh_decay_time - float, decorrelation rate in days, time for coherence to
+                                 drop to 1/e of its initial value
+                coh_inf        - float, long-term coherence, minimum attainable coherence value
+                sensor_name    - string, SAR sensor name
+                inc_angle      - float, incidence angle in degrees
+                orbit_tube     - float, orbital tube of the satellite in meters
+                SNR            - float, signal-to-noise ratio in dB
+                                 Envisat value from Table 3.3 in Guarnieri (2013).
+                                 How to calculate it from NESZ?
+                                 NESZ = -22 dB from Table 1 in
+                                 https://sentinels.copernicus.eu/web/sentinel
+                display        - bool, display result as matrix
+    Returns:    coh            - 1D np.ndarray, simulated spatial coherence
+                coh_temp       - 1D np.ndarray, simulated spatial coherence
+                                 temporal    decorrelation component
+                coh_geom       - 1D np.ndarray, simulated spatial coherence
+                                 geometrical decorrelation component
     """
-    num_pair = len(date12_list)
+    # check inputs
+    if not pbase_list and orbit_tube <= 0:
+        raise ValueError('Perp baseline is NOT properly set via pbase_list or orbit_tube!')
+
+    # get the temporal baselines
     date1s = [x.split('_')[0] for x in date12_list]
     date2s = [x.split('_')[1] for x in date12_list]
     date_list = sorted(list(set(date1s + date2s)))
     tbase_list = ptime.date_list2tbase(date_list)[0]
 
-    coh_thermal = 1. / ( 1. + 1. / 10**(SNR / 10) )
+    num_date = len(date_list)
+    num_date12 = len(date12_list)
 
-    # bperp
-    rng = np.random.default_rng(2)
-    pbase_list = rng.normal(0, 50, num_pair).tolist()
-    pbase_c = critical_perp_baseline(sensor_name, inc_angle)
+    # simulate the spatial perp baselines
+    rng = np.random.default_rng(seed=32768)
+    if not pbase_list:
+        pbase_list = list((rng.random(num_date, dtype=np.float32) - 0.5) * orbit_tube)
+    pbase_crit = critical_perp_baseline(sensor_name.lower(), inc_angle=inc_angle)
 
-    coh = np.zeros(num_pair, dtype=np.float32)
-    for i in range(num_pair):
+    # calc thermal decorrelation
+    coh_thermal = 1. / (1. + 1./SNR)
+
+    # calc temporal and spatial decorrelation
+    # based on the exponential model from Parizzi et al. (2009)
+    coh = np.zeros(num_date12, dtype=np.float32)
+    coh_temp = np.zeros(num_date12, dtype=np.float32)
+    coh_geom = np.zeros(num_date12, dtype=np.float32)
+    for i in range(num_date12):
+        # get the temporal and spatial baseline for each interferogram
         date1, date2 = date12_list[i].split('_')
         ind1, ind2 = date_list.index(date1), date_list.index(date2)
         tbase = tbase_list[ind2] - tbase_list[ind1]
         pbase = pbase_list[ind2] - pbase_list[ind1]
 
-        coh_geom = (pbase_c - abs(pbase)) / pbase_c
-        coh_temp = np.multiply((coh_thermal - coh_resid), np.exp(-1*abs(tbase)/decor_time)) + coh_resid
-        coh[i] = coh_geom * coh_temp
+        # calc coherence for each interferogram
+        coh_temp[i] = np.multiply(
+            (coh_thermal - coh_inf), np.exp(-1*np.abs(tbase)/coh_decay_time)
+        ) + coh_inf
+        coh_geom[i] = (pbase_crit - np.abs(pbase)) / pbase_crit
+    coh = coh_temp * coh_geom
 
+    # plot
     if display:
-        print('critical perp baseline: %.f m' % pbase_c)
-        coh_mat = coherence_matrix(date12_list, coh)
-        plt.figure()
-        plt.imshow(coh_mat, vmin=0.0, vmax=1.0, cmap='jet')
-        plt.xlabel('Image number')
-        plt.ylabel('Image number')
-        cbar = plt.colorbar()
+        print(f'critical perp baseline: {pbase_crit:.1f} m')
+        coh_mat = pnet.coherence_matrix(date12_list, coh, diag_value=1.)
+        # plot
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=[4, 3])
+        im = ax.imshow(coh_mat, vmin=0.0, vmax=1.0, cmap='jet', interpolation='nearest')
+        # axis format
+        ax.set_xlabel('Image number')
+        ax.set_ylabel('Image number')
+        ax.set_title('Coherence matrix')
+        # colorbar
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes('right', '2%', pad='2%', axes_class=plt.Axes)
+        cbar = fig.colorbar(im, cax=cax)
         cbar.set_label('Coherence')
-        plt.title('Coherence matrix')
         plt.show()
 
-    return coh
-
-
-def simulate_coherence(date12_list, baseline_file='bl_list.txt', sensor_name='Env', inc_angle=22.8,
-                       decor_time=200.0, coh_resid=0.2, display=False):
-    """Simulate coherence for a given set of interferograms
-    Inputs:
-        date12_list  - list of string in YYMMDD-YYMMDD format, indicating pairs configuration
-        baseline_file - string, path of baseline list text file
-        sensor_name     - string, SAR sensor name
-        inc_angle  - float, incidence angle
-        decor_time - float / 2D np.array in size of (1, pixel_num)
-                     decorrelation rate in days, time for coherence to drop to 1/e of its initial value
-        coh_resid  - float / 2D np.array in size of (1, pixel_num)
-                     long-term coherence, minimum attainable coherence value
-        display    - bool, display result as matrix or not
-    Output:
-        cohs       - 2D np.array in size of (ifgram_num, pixel_num)
-    Example:
-        date12_list = pnet.get_date12_list('ifgram_list.txt')
-        cohs = simulate_coherences(date12_list, 'bl_list.txt', sensor_name='Tsx')
-
-    References:
-        Guarnieri, A. M. (2013), Introduction to RADAR, Politecnico di Milano Dipartimento di Elettronica
-            e Informazione, Milano.
-        Zebker, H. A., & Villasenor, J. (1992). Decorrelation in interferometric radar echoes.
-            IEEE-TGRS, 30(5), 950-959.
-        Hanssen, R. F. (2001). Radar interferometry: data interpretation and error analysis
-            (Vol. 2). Dordrecht, Netherlands: Kluwer Academic Pub.
-        Morishita, Y., & Hanssen, R. F. (2015). Temporal decorrelation in L-, C-, and X-band satellite
-            radar interferometry for pasture on drained peat soils. IEEE-TGRS, 53(2), 1096-1104.
-        Parizzi, A., Cong, X., & Eineder, M. (2009). First Results from Multifrequency Interferometry.
-            A comparison of different decorrelation time constants at L, C, and X Band. ESA Scientific
-            Publications(SP-677), 1-5.
-    """
-    date_list, pbase_list, dop_list = read_baseline_file(baseline_file)[0:3]
-    tbase_list = ptime.date_list2tbase(date_list)[0]
-
-    # Thermal decorrelation (Zebker and Villasenor, 1992, Eq.4)
-    SNR = 10 ** (19.5 / 10)  # hardwired for Envisat (Guarnieri, 2013)
-    coh_thermal = 1. / (1. + 1./SNR)
-
-    pbase_c = critical_perp_baseline(sensor_name, inc_angle)
-    bandwidth_az = sensor.SENSOR_DICT[sensor_name.lower()]['doppler_bandwidth']
-
-    date12_list = ptime.yyyymmdd_date12(date12_list)
-    ifgram_num = len(date12_list)
-
-    if isinstance(decor_time, (int, np.int16, np.int32, float, np.float32, np.float64)):
-        pixel_num = 1
-        decor_time = float(decor_time)
-    else:
-        pixel_num = decor_time.shape[1]
-    if decor_time == 0.:
-        decor_time = 0.01
-    cohs = np.zeros((ifgram_num, pixel_num), np.float32)
-    for i in range(ifgram_num):
-        if display:
-            sys.stdout.write('\rinterferogram = %4d/%4d' % (i, ifgram_num))
-            sys.stdout.flush()
-        m_date, s_date = date12_list[i].split('_')
-        m_idx = date_list.index(m_date)
-        s_idx = date_list.index(s_date)
-
-        pbase = pbase_list[s_idx] - pbase_list[m_idx]
-        tbase = tbase_list[s_idx] - tbase_list[m_idx]
-
-        # Geometric decorrelation (Hanssen, 2001, Eq. 4.4.12)
-        coh_geom = (pbase_c - abs(pbase)) / pbase_c
-        if coh_geom < 0.:
-            coh_geom = 0.
-
-        # Doppler centroid decorrelation (Hanssen, 2001, Eq. 4.4.13)
-        if not dop_list:
-            coh_dc = 1.
-        else:
-            coh_dc = calculate_doppler_overlap(dop_list[m_idx],
-                                               dop_list[s_idx],
-                                               bandwidth_az)
-            if coh_dc < 0.:
-                coh_dc = 0.
-
-        # Option 1: Temporal decorrelation - exponential delay model (Parizzi et al., 2009; Morishita and Hanssen, 2015)
-        coh_temp = np.multiply((coh_thermal - coh_resid), np.exp(-1*abs(tbase)/decor_time)) + coh_resid
-
-        coh = coh_geom * coh_dc * coh_temp
-        cohs[i, :] = coh
-    #epsilon = 1e-3
-    #cohs[cohs < epsilon] = epsilon
-    if display:
-        print('')
-
-    if display:
-        print('critical perp baseline: %.f m' % pbase_c)
-        cohs_mat = coherence_matrix(date12_list, cohs)
-        plt.figure()
-        plt.imshow(cohs_mat, vmin=0.0, vmax=1.0, cmap='jet')
-        plt.xlabel('Image number')
-        plt.ylabel('Image number')
-        cbar = plt.colorbar()
-        cbar.set_label('Coherence')
-        plt.title('Coherence matrix')
-        plt.show()
-    return cohs
+    return coh, coh_temp, coh_geom
 
 
 ##################################################################
-def threshold_doppler_overlap(date12_list, date_list, dop_list, bandwidth_az, dop_overlap_min=0.15):
+def threshold_doppler_overlap(date12_list, date_list, dop_list, bandwidth_az,
+                              dop_overlap_min=0.15):
     """Remove pairs/interoferogram with doppler overlap larger than critical value
     Inputs:
         date12_list : list of string, for date12 in YYMMDD-YYMMDD format
