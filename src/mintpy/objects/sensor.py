@@ -298,6 +298,18 @@ ICEYE = {
     'chirp_bandwidth'            : [37.6e6, 299e6], # Hz
 }
 
+# TeLEOS-2
+# launch date: 2023-04-22
+# end    date: operational
+# https://geo-insights.ai/wp-content/uploads/2024/06/ST-Engineering-Geo-Insights-TeLEOS-2-Datasheet.pdf
+# https://www.eoportal.org/satellite-missions/teleos-1
+TELEOS2 = {
+    # orbit
+    'altitude'                   : 574e3,           # m, near-equitorial
+    'orbit_inclination'          : 10,              # deg
+    # sar / antenna
+}
+
 
 ##--------------------  C-band  --------------------##
 
