@@ -221,6 +221,7 @@ SWOT = {
 # end    date: operational
 # from Table 1 in Jung et al. (2014)
 # https://www.eoportal.org/satellite-missions/terrasar-x
+# Bachmann et al. (2010, IEEE-TGRS), https://doi.org/10.1109/TGRS.2009.2033934
 TSX = {
     # orbit
     'altitude'                   : 514.8e3,   # m, mean value, 505-533 km
@@ -228,8 +229,8 @@ TSX = {
     'repeat_cycle'               : 11,        # day
     # sar / antenna
     'carrier_frequency'          : 9.65e9,    # Hz
-    'antenna_length'             : 4.8,       # m
-    'antenna_width'              : 0.8,       # m
+    'antenna_length'             : 4.8,       # m, Bachmann et al. (2010)
+    'antenna_width'              : 0.7,       # m, Bachmann et al. (2010)
     'doppler_bandwidth'          : 2770,      # Hz
     'pulse_repetition_frequency' : 3800,      # Hz
     'chirp_bandwidth'            : 100e6,     # Hz
@@ -296,6 +297,18 @@ ICEYE = {
     'antenna_width'              : 0.4,             # m
     'pulse_repetition_frequency' : [2e3, 10e3],     # Hz
     'chirp_bandwidth'            : [37.6e6, 299e6], # Hz
+}
+
+# TeLEOS-2
+# launch date: 2023-04-22
+# end    date: operational
+# https://geo-insights.ai/wp-content/uploads/2024/06/ST-Engineering-Geo-Insights-TeLEOS-2-Datasheet.pdf
+# https://www.eoportal.org/satellite-missions/teleos-1
+TELEOS2 = {
+    # orbit
+    'altitude'                   : 574e3,           # m, near-equitorial
+    'orbit_inclination'          : 10,              # deg
+    # sar / antenna
 }
 
 
@@ -410,6 +423,7 @@ RCM = {
 # https://www.eoportal.org/satellite-missions/gaofen-3
 # Li et al. (2018, RS) at https://doi.org/10.3390/rs10121929
 # Table I in Yang et al. (2023, IEEE-TGRS) at https://doi.org/10.1109/TGRS.2023.3238707
+# Table 2 in Sun et al. (2017, RS) at https://doi.org/10.3390/s17102419
 GF3 = {
     # orbit
     'altitude'                   : 755e3,     # m
@@ -418,7 +432,7 @@ GF3 = {
     # sar / antenna
     'carrier_frequency'          : 5.4e9,     # Hz
     'antenna_length'             : 15,        # m
-    'antenna_width'              : 1.232,     # m
+    'antenna_width'              : 1.232,     # m, Table 2 in Sun et al. (2017)
     'pulse_repetition_frequency' : 1412.18,   # Hz
     'chirp_bandwidth'            : 60.00e6,   # Hz
     'sampling_frequency'         : 533.33e6,  # Hz, IF sampling
@@ -469,18 +483,21 @@ SEN = {
 # https://www.eoportal.org/satellite-missions/hj-1
 # Liu et al. (2014, J Radar), doi: 10.3724/SP.J.1300.2013.13050
 # Zhang et al. (2014, J Radar), doi: https://doi.org/10.3724/SP.J.1300.2014.13135
+# Yu et al. (2014, J Radar), doi: https://doi.org/10.3724/sp.J.1300.2013.13050
 # spatial resolution: 10 m (4 looks)
 # swath width: 100 km
 HJ1C = {
     # orbit
     'altitude'                   : 502e3,     # m
-    'orbit_inclination'          : 97.3,      # deg
+    'orbit_inclination'          : 97.3671,   # deg, Yu et al. (2014)
     'repeat_cycle'               : 31,        # day
     # sar / antenna
     'carrier_frequency'          : 3.13e9,    # Hz
+    'antenna_length'             : 6.0,       # m, Yu et al. (2014)
+    'antenna_width'              : 2.8,       # m, Yu et al. (2014)
     'pulse_repetition_frequency' : 2600,      # Hz, 2600-3700
     'chirp_bandwidth'            : 60.0e6,    # Hz
-    'noise_equivalent_sigma_zero': -22,       # dB
+    'noise_equivalent_sigma_zero': -19,       # dB, Yu et al. (2014)
 }
 
 # NISAR S-band
