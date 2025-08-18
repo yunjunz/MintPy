@@ -10,6 +10,44 @@
 import numpy as np
 
 
+def get_los_azimuth(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=True):
+    """Get the LOS azimuth angle given the satellite parameters and ground latitude.
+
+    Parameters: orb_incl     - float, orbit inclination angle in degree
+                orb_dir      - str, orbit/pass direction, ascending or descending
+                sat_hgt      - float, satellite height/altitude in meter
+                look_dir     - str, radar/antenna look direction, left or right
+                lat          - float, latitude of the point of interest on the ground
+                round_flag   - bool, round the output angle to the nearest integer
+    Returns:    los_az_angle - float, azimuth angle of the LOS vector from the ground to the SAR platform
+                               measured from the north with anti-clockwise as positive in degrees
+    """
+    orb_az_angle = ground_track_azimuth(lat, orb_incl, sat_hgt, orb_dir)
+    los_az_angle = orbit2los_azimuth_angle(orb_az_angle, look_dir)
+    # convert to [0, 360)
+    if los_az_angle < 0:
+        los_az_angle += 360
+    # use the nearest integer angle for naming simplicity and re-use
+    if round_flag:
+        los_az_angle = round(los_az_angle)
+    return los_az_angle
+
+
+def orbit2los_azimuth_angle(orb_az_angle, look_direction='right'):
+    """Convert the azimuth angle of the along-track vector to the LOS vector.
+    Parameters: orb_az_angle - np.ndarray or float, azimuth angle of the SAR platform along track/orbit direction
+                               measured from the north with anti-clockwise direction as positive, in the unit of degrees
+    Returns:    los_az_angle - np.ndarray or float, azimuth angle of the LOS vector from the ground to the SAR platform
+                               measured from the north with anti-clockwise direction as positive, in the unit of degrees
+    """
+    if look_direction == 'right':
+        los_az_angle = orb_az_angle + 90
+    else:
+        los_az_angle = orb_az_angle - 90
+    los_az_angle -= np.round(los_az_angle / 360.) * 360.
+    return los_az_angle
+
+
 def ground_track_azimuth(phi, orb_incl, h_sat, orb_dir="ascending"):
     """
     Compute ground-track heading H (bearing from North, anti-clockwise positive),
