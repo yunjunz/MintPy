@@ -99,7 +99,7 @@ def write(datasetDict, out_file, metadata=None, ref_file=None, compression=None,
             vprint(f'delete exsited file: {out_file}')
 
         # writing
-        print(f'create HDF5 file: {out_file} with w mode')
+        vprint(f'create HDF5 file: {out_file} with w mode')
         maxDigit = max(len(i) for i in dsNames)
         with h5py.File(out_file, 'w') as f:
             # 1. write input datasets
