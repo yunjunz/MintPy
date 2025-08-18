@@ -42,7 +42,7 @@ def calc_shadow(dem, reso, los_inc_angle, los_az_angle, plot=False, print_msg=Tr
     num_row = dem_rot.shape[0]
     prog_bar = progressBar(maxValue=num_row, print_msg=print_msg)
     for y in range(num_row):
-        prog_bar.update(y+1, every=1, suffix=f'row {y+1}')
+        prog_bar.update(y+1, every=5, suffix=f'row {y+1}')
         dem_y = dem_rot[y,:]
         if not np.all(np.isnan(dem_y)):
             # max number of pixels to search based on the maximum height difference
@@ -104,7 +104,7 @@ def calc_layover(dem, reso, los_inc_angle, los_az_angle, plot=False, print_msg=T
     num_row = dem_rot.shape[0]
     prog_bar = progressBar(maxValue=num_row, print_msg=print_msg)
     for y in range(num_row):
-        prog_bar.update(y+1, every=1, suffix=f'row {y+1}')
+        prog_bar.update(y+1, every=5, suffix=f'row {y+1}')
         dem_y = dem_rot[y,:]
         if not np.all(np.isnan(dem_y)):
             # max number of pixels to search based on the maximum height difference
@@ -146,11 +146,11 @@ def calc_layover(dem, reso, los_inc_angle, los_az_angle, plot=False, print_msg=T
 def calc_local_slope(dem, reso, plot=False):
     """Calculate the local slope and max slope direction/aspect
 
-    Parameters: dem       - 2D np.ndarray, DEM in meters
-                reso      - int/float, DEM resolution in meters
-    Returns:    slope_deg - 2D np.ndarray, local slope magnitude in degrees
-                slope_dir - 2D np.ndarray, local max slope azimuth direction,
-                            measured from the north with anti-clockwise as positive
+    Parameters: dem    - 2D np.ndarray, DEM in meters
+                reso   - int/float, DEM resolution in meters
+    Returns:    slope  - 2D np.ndarray, magnitude         of the local slope in degrees
+                aspect - 2D np.ndarray, azimuth direction of the local slope in degrees
+                         measured from the north with anti-clockwise as positive
     """
     # calculate the spatial gradient along the X/Y direction in ratios
     reso = 90
@@ -159,24 +159,23 @@ def calc_local_slope(dem, reso, plot=False):
     dx /= reso
 
     # compute the local slope magnitude in ratio and in degrees
-    slope_ratio = np.sqrt(dx**2 + dy**2)
-    slope_deg = np.rad2deg(np.arctan(slope_ratio))
+    slope = np.rad2deg(np.arctan(np.sqrt(dx**2 + dy**2)))
 
-    # compute the local max slope direction (azimuth angle)
-    slope_dir = np.rad2deg(np.arctan2(dy, dx)) + 90
-    slope_dir -= np.round(slope_dir / 360.) * 360.
+    # compute the local max slope direction, i.e. aspect (azimuth angle)
+    aspect = np.rad2deg(np.arctan2(dy, dx)) + 90
+    aspect -= np.round(aspect / 360.) * 360.
 
     if plot:
         fig, axs = plt.subplots(nrows=1, ncols=3, figsize=[10, 3])
-        titles = ['DEM [m]', 'Slope [deg]', 'Slope Direction']
-        for ax, data, title in zip(axs.flatten(), [dem, slope, slope_dir], titles):
+        titles = ['DEM [m]', 'Slope [deg]', 'Aspect [deg]']
+        for ax, data, title in zip(axs.flatten(), [dem, slope, aspect], titles):
             im = ax.imshow(data, interpolation='nearest')
-            fig.colorbar(im, ax=ax)
+            fig.colorbar(im, ax=ax, orientation='horizontal')
             ax.set_title(title)
         fig.tight_layout()
         plt.show()
 
-    return slope_deg, slope_dir
+    return slope, aspect
 
 
 ################################################################################
