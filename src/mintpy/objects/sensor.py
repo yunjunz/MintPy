@@ -522,8 +522,10 @@ NISAR_S = {
 # Seasat
 # launch date: 1978-06-27
 # end    date: 1978-10-10
-# from Table 6-1 in Kim and Jordan (2006)
+# References:
+# Table 6-1 in Kim and Jordan (2006)
 # https://www.eoportal.org/satellite-missions/seasat
+# Table 1.2 in Curlander & Mcdonough (1991)
 SEASAT = {
     # orbit
     'altitude'                   : 787e3,     # m, mean value, 775-799 km
@@ -535,6 +537,7 @@ SEASAT = {
     'antenna_width'              : 2.16,      # m
     'pulse_repetition_frequency' : 1555,      # Hz, 1463-1647
     'chirp_bandwidth'            : 19e6,      # Hz
+    'noise_equivalent_sigma_zero': -18,       # dB, Table 1.2 in Curlander & Mcdonough (1991)
 }
 
 # JERS-1
