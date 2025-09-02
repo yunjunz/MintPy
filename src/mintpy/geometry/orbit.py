@@ -10,6 +10,27 @@
 import numpy as np
 
 
+def get_relative_orbit_number(abs_orbit: int, platform: str) -> int:
+    """Return the relative orbit number given the absolute orbit number.
+
+    Parameters: abs_orbit - int, absolute orbit number
+                platform  - str, SAR platform
+    Returns:    rel_orbit - int, relative orbit number
+    """
+    if sensor == "S1A":
+        rel_orbit = (abs_orbit - 73) % 175 + 1
+    elif sensor == "S1B":
+        rel_orbit = (abs_orbit - 27) % 175 + 1
+    elif sensor == "S1C":
+        rel_orbit = (abs_orbit - 172) % 175 + 1
+    elif sensor == "TSX":
+        rel_orbit = (abs_orbit - 1) % 167 + 1
+    else:
+        raise ValueError(f"Unknown platform: {platform}!")
+
+    return rel_orbit
+
+
 def get_los_azimuth(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=True):
     """Get the LOS azimuth angle given the satellite parameters and ground latitude.
 
