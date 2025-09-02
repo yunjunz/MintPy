@@ -4,11 +4,8 @@
 # Author: Zhang Yunjun, Yidi Wang, Jan 2025                #
 ############################################################
 # Recommend import:
-#   from mintpy.geometry.dem import calc_shadow, calc_layover, calc_local_slope
-#   from mintpy.geometry import dem
+#   from mintpy.geometry import calc_shadow, calc_layover, calc_local_slope
 
-
-import os
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -67,7 +64,7 @@ def calc_shadow(dem, reso, los_inc_angle, los_az_angle, plot=False, print_msg=Tr
 
     ## plot
     if plot:
-        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=[10, 8])
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=[10, 8], sharex=True, sharey=True)
         titles = ['DEM (geo-coord)', 'DEM (radar-coord)', 'shadow (geo-coord)', 'shadow (radar-coord)']
         for ax, data, title in zip(axs.flatten(), [dem, dem_rot, shadow, shadow_rot], titles):
             im = ax.imshow(data, interpolation='nearest')
@@ -131,7 +128,7 @@ def calc_layover(dem, reso, los_inc_angle, los_az_angle, plot=False, print_msg=T
 
     ## plot
     if plot:
-        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=[10, 8])
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=[10, 8], sharex=True, sharey=True)
         titles = ['DEM (geo-coord)', 'DEM (radar-coord)', 'layover (geo-coord)', 'layover (radar-coord)']
         for ax, data, title in zip(axs.flatten(), [dem, dem_rot, layover, layover_rot], titles):
             im = ax.imshow(data, interpolation='nearest')
@@ -151,9 +148,14 @@ def calc_local_slope(dem, reso, plot=False):
     Returns:    slope  - 2D np.ndarray, magnitude         of the local slope in degrees
                 aspect - 2D np.ndarray, azimuth direction of the local slope in degrees
                          measured from the north with anti-clockwise as positive
+    Examples:
+        from mintpy.utils import readfile
+        from mintpy.geometry import calc_local_slope
+        dem, atr = readfile.read('cop.dem')
+        reso = float(atr['X_STEP']) * 108e3
+        slope, aspect = calc_local_slope(dem, reso)
     """
     # calculate the spatial gradient along the X/Y direction in ratios
-    reso = 90
     dy, dx = np.gradient(dem)
     dy /= -reso
     dx /= reso
@@ -166,7 +168,7 @@ def calc_local_slope(dem, reso, plot=False):
     aspect -= np.round(aspect / 360.) * 360.
 
     if plot:
-        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=[10, 3])
+        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=[10, 3], sharey=True)
         titles = ['DEM [m]', 'Slope [deg]', 'Aspect [deg]']
         for ax, data, title in zip(axs.flatten(), [dem, slope, aspect], titles):
             im = ax.imshow(data, interpolation='nearest')
