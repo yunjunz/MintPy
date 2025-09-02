@@ -4,11 +4,8 @@
 # Author: Zhang Yunjun, Yidi Wang, Jan 2025                #
 ############################################################
 # Recommend import:
-#   from mintpy.geometry.dem import calc_shadow, calc_layover, calc_local_slope
-#   from mintpy.geometry import dem
+#   from mintpy.geometry import calc_shadow, calc_layover, calc_local_slope
 
-
-import os
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -151,9 +148,14 @@ def calc_local_slope(dem, reso, plot=False):
     Returns:    slope  - 2D np.ndarray, magnitude         of the local slope in degrees
                 aspect - 2D np.ndarray, azimuth direction of the local slope in degrees
                          measured from the north with anti-clockwise as positive
+    Examples:
+        from mintpy.utils import readfile
+        from mintpy.geometry import calc_local_slope
+        dem, atr = readfile.read('cop.dem')
+        reso = float(atr['X_STEP']) * 108e3
+        slope, aspect = calc_local_slope(dem, reso)
     """
     # calculate the spatial gradient along the X/Y direction in ratios
-    reso = 90
     dy, dx = np.gradient(dem)
     dy /= -reso
     dx /= reso
