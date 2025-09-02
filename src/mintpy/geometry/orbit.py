@@ -31,7 +31,7 @@ def get_relative_orbit_number(abs_orbit: int, platform: str) -> int:
     return rel_orbit
 
 
-def get_los_azimuth(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=True):
+def get_los_azimuth_angle(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=False):
     """Get the LOS azimuth angle given the satellite parameters and ground latitude.
 
     Parameters: orb_incl     - float, orbit inclination angle in degree
@@ -43,14 +43,20 @@ def get_los_azimuth(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=True):
     Returns:    los_az_angle - float, azimuth angle of the LOS vector from the ground to the SAR platform
                                measured from the north with anti-clockwise as positive in degrees
     """
+
     orb_az_angle = ground_track_azimuth(lat, orb_incl, sat_hgt, orb_dir)
     los_az_angle = orbit2los_azimuth_angle(orb_az_angle, look_dir)
+
     # convert to [0, 360)
-    if los_az_angle < 0:
-        los_az_angle += 360
+    if np.isscalar(los_az_angle):
+        los_az_angle = los_az_angle + 360 if los_az_angle < 0 else los_az_angle
+    else:
+        los_az_angle[los_az_angle<0] += 360
+
     # use the nearest integer angle for naming simplicity and re-use
     if round_flag:
-        los_az_angle = round(los_az_angle)
+        los_az_angle = np.round(los_az_angle)
+
     return los_az_angle
 
 
@@ -76,7 +82,7 @@ def ground_track_azimuth(phi, orb_incl, h_sat, orb_dir="ascending"):
 
     Parameters
     ----------
-    phi : float
+    phi : float / np.ndarray
         Geodetic latitude of subsatellite point (deg, positive north).
     orb_incl : float
         Orbital inclination (deg, 0..180).
@@ -88,7 +94,7 @@ def ground_track_azimuth(phi, orb_incl, h_sat, orb_dir="ascending"):
 
     Returns
     -------
-    H_deg : float
+    H_deg : float / np.ndarray
         Ground-track heading in degrees, -180..180,
         with 0 = North, anti-clockwise positive.
     """
@@ -102,20 +108,24 @@ def ground_track_azimuth(phi, orb_incl, h_sat, orb_dir="ascending"):
     phi_rad = np.deg2rad(phi)
     orb_incl_rad = np.deg2rad(orb_incl)
 
+    # Convert to numpy array [to support array operation]
+    phi_rad = np.array(phi_rad, dtype=np.float32)
+    one = np.ones(phi_rad.size)
+
     # Compute sin u from latitude
     if abs(np.sin(orb_incl_rad)) < 1e-12:
         raise ValueError("Inclination too small; sin(orb_incl) ~ 0")
     sin_u = np.sin(phi_rad) / np.sin(orb_incl_rad)
-    if abs(sin_u) > 1.0 + 1e-12:
+    if np.any(np.abs(sin_u) > 1.0 + 1e-12):
         raise ValueError(f"No valid argument of latitude: |sin_u|={sin_u}")
-    sin_u = max(-1.0, min(1.0, sin_u))  # clamp
+    sin_u = np.maximum(-1*one, np.minimum(one, sin_u))  # clamp
 
     # Choose cos u sign from pass type
-    cos_u_mag = np.sqrt(max(0.0, 1.0 - sin_u*sin_u))
+    cos_u_mag = np.sqrt(np.maximum(one*0.0, one*1.0 - sin_u*sin_u))
     if orb_dir.lower().startswith("a"):
-        cos_u = +cos_u_mag   # moving toward pole
+        cos_u = cos_u_mag   # moving toward pole
     elif orb_dir.lower().startswith("d"):
-        cos_u = -cos_u_mag   # moving away from pole
+        cos_u = cos_u_mag * -1   # moving away from pole
     else:
         raise ValueError("orb_dir must be 'ascending' or 'descending'")
 
@@ -129,13 +139,15 @@ def ground_track_azimuth(phi, orb_incl, h_sat, orb_dir="ascending"):
 
     # Heading (North = 0, anticlockwise positive)
     H_rad = np.arctan2(-V_E, V_N)
-    if H_rad < 0:
-        H_rad += 2*np.pi
+    H_rad[H_rad<0] += 2*np.pi
     H_deg = np.rad2deg(H_rad)
 
     # Heading: ensure with (-180, 180]
-    if H_deg <= -180:
-        H_deg += 360
-    elif H_deg > 180:
-        H_deg -= 360
+    H_deg[H_deg <= -180] += 360
+    H_deg[H_deg > 180] -= 360
+
+    # Output: ensure consistent data type as input
+    if np.isscalar(phi):
+        H_deg = H_deg[0]
+
     return H_deg
