@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  unit-n-workflow-tests:
+  install:
     docker:
       - image: cimg/base:current
         environment:
@@ -42,6 +42,19 @@ jobs:
             tropo_pyaps3.py -h
             solid_earth_tides.py -h
 
+  unit-test:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Unit Test
           command: |
@@ -50,36 +63,114 @@ jobs:
             ${MINTPY_HOME}/tests/asc_desc2horz_vert.py
             ${MINTPY_HOME}/tests/dem_error.py
 
+  integration-test-1:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 1/6 - FernandinaSenDT128 (ISCE2/topsStack)
           command: |
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset FernandinaSenDT128
 
+  integration-test-2:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 2/6 - SanFranSenDT42 (ARIA)
           command: |
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset SanFranSenDT42
 
+  integration-test-3:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 3/6 - RidgecrestSenDT71 (HyP3)
           command: |
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset RidgecrestSenDT71
 
+  integration-test-4:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 4/6 - SanFranBaySenD42 (GMTSAR)
           command: |
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset SanFranBaySenD42
 
+  integration-test-5:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 5/6 - WellsEnvD2T399 (Gamma)
           command: |
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset WellsEnvD2T399
 
+  integration-test-6:
+    docker:
+      - image: cimg/base:current
+        environment:
+          CONDA_PREFIX: /root/tools/miniforge
+          MINTPY_HOME: /root/tools/MintPy
+        user: root
+    working_directory: /root/tools/MintPy
+    resource_class: large
+
+    steps:
+      - checkout:
+          method: blobless
       - run:
           name: Integration Test 6/6 - WCapeSenAT29 (SNAP)
           command: |
@@ -90,4 +181,19 @@ workflows:
   version: 2
   unit-n-workflow-tests:
     jobs:
-      - unit-n-workflow-tests
+      - install
+      - unit-test:
+          requires: install
+      - integration-test-1:
+          requires: install
+      - integration-test-2:
+          requires: install
+      - integration-test-3:
+          requires: install
+      - integration-test-4:
+          requires: install
+      - integration-test-5:
+          requires: install
+      - integration-test-6:
+          requires: install
+
