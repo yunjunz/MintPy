@@ -183,17 +183,24 @@ workflows:
     jobs:
       - install
       - unit-test:
-          requires: install
+          requires:
+            - install
       - integration-test-1:
-          requires: install
+          requires:
+            - install
       - integration-test-2:
-          requires: install
+          requires:
+            - install
       - integration-test-3:
-          requires: install
+          requires:
+            - install
       - integration-test-4:
-          requires: install
+          requires:
+            - install
       - integration-test-5:
-          requires: install
+          requires:
+            - install
       - integration-test-6:
-          requires: install
+          requires:
+            - install
 
