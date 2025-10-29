@@ -13,6 +13,10 @@ jobs:
     steps:
       - checkout:
           method: blobless
+      - restore_cache:
+          keys:
+            - v1-deps-{{ checksum "requirements.txt" }}
+            - v1-deps-
       - run:
           name: Setting Up Environment with Miniforge
           command: |
@@ -28,6 +32,8 @@ jobs:
             source "${HOME}/tools/miniforge/etc/profile.d/mamba.sh"
             # modify/export env var PATH to BASH_ENV to be shared across run steps
             echo 'export PATH=${CONDA_PREFIX}/bin:${PATH}' >> ${BASH_ENV}
+            python -m venv venv
+            . venv/bin/activate
 
       - run:
           name: Installing MintPy
@@ -42,22 +48,30 @@ jobs:
             tropo_pyaps3.py -h
             solid_earth_tides.py -h
 
+      - save_cache:
+          key: v1-deps-{{ checksum "requirements.txt" }}
+          paths:
+            - ./venv
+            - ~/.cache/pip
+      - persist_to_workspace:
+          root: .
+          paths:
+            - venv
+
   unit-test:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Unit Test
           command: |
+            . venv/bin/activate
             ${MINTPY_HOME}/tests/objects/euler_pole.py
             ${MINTPY_HOME}/tests/objects/ionex.py
             ${MINTPY_HOME}/tests/asc_desc2horz_vert.py
@@ -67,18 +81,16 @@ jobs:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Integration Test 1/6 - FernandinaSenDT128 (ISCE2/topsStack)
           command: |
+            . venv/bin/activate
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset FernandinaSenDT128
 
@@ -86,18 +98,16 @@ jobs:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Integration Test 2/6 - SanFranSenDT42 (ARIA)
           command: |
+            . venv/bin/activate
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset SanFranSenDT42
 
@@ -105,18 +115,16 @@ jobs:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Integration Test 3/6 - RidgecrestSenDT71 (HyP3)
           command: |
+            . venv/bin/activate
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset RidgecrestSenDT71
 
@@ -124,18 +132,16 @@ jobs:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Integration Test 4/6 - SanFranBaySenD42 (GMTSAR)
           command: |
+            . venv/bin/activate
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset SanFranBaySenD42
 
@@ -143,18 +149,16 @@ jobs:
     docker:
       - image: cimg/base:current
         environment:
-          CONDA_PREFIX: /root/tools/miniforge
           MINTPY_HOME: /root/tools/MintPy
-        user: root
-    working_directory: /root/tools/MintPy
     resource_class: large
 
     steps:
-      - checkout:
-          method: blobless
+      - attach_workspace:
+          at: .
       - run:
           name: Integration Test 5/6 - WellsEnvD2T399 (Gamma)
           command: |
+            . venv/bin/activate
             mkdir -p ${HOME}/data
             ${MINTPY_HOME}/tests/smallbaselineApp.py --dir ${HOME}/data --dset WellsEnvD2T399
 
