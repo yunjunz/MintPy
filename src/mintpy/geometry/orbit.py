@@ -55,7 +55,7 @@ def get_los_azimuth_angle(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=
 
     # use the nearest integer angle for naming simplicity and re-use
     if round_flag:
-        los_az_angle = np.round(los_az_angle)
+        los_az_angle = int(np.round(los_az_angle))
 
     return los_az_angle
 
