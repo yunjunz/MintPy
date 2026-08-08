@@ -207,16 +207,18 @@ def critical_perp_baseline(sensor_name, inc_angle=30, print_msg=False):
     # sensor parameters
     near_range = {
         # typical values
-        'lt1' : 725702,
-        'tsx' : 634509,
         'alos': 842663,
         'jers': 688849,
+        'lt1' : 725702,
+        's1'  : 799547,
+        'tsx' : 634509,
     }[sensor_name]
     wvl = SPEED_OF_LIGHT / sensor.SENSOR_DICT[sensor_name]['carrier_frequency']
     range_bw = sensor.SENSOR_DICT[sensor_name]['chirp_bandwidth']
 
     # calculate critical perpendicular baseline
-    bperp_crit = wvl * (range_bw / SPEED_OF_LIGHT) * near_range * np.tan(np.deg2rad(inc_angle))
+    inc_angle_rad = np.deg2rad(inc_angle)
+    bperp_crit = wvl * (range_bw / SPEED_OF_LIGHT) * near_range * np.tan(inc_angle_rad)
     print(f'critical perpendicular baseline: {bperp_crit} m') if print_msg else None
 
     return bperp_crit
