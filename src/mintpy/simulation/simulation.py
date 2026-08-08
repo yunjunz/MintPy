@@ -24,6 +24,38 @@ from mintpy.utils import network as pnet, ptime, time_func
 SPEED_OF_LIGHT = 299792458   # m/s
 
 
+############################ Error budget #######################################
+def los_vel_std(revisit_time=12, time_span=5, print_msg=True):
+    """ Calculate the corresponding LOS velocity STD.
+
+    Based on Eq. (10) in Fattahi & Amelung (2015, JGR), we could scale 
+    the v_std of a 3-year-long TS into a 5-year-long TS, assuming the 
+    same level of noises in the time-series.
+
+    Parameters: revisit_time - float, temporal reslution in days
+                time_span    - float, time series length in years
+    Returns:    los_std      - float, LOS velocity STD in mm/year, for 0.1~50km
+    """
+    # reference: NISAR SES L2 requirement for secular deformation rates
+    # https://nisar.jpl.nasa.gov/mission/mission-requirements/level-2-science-requirements/
+    los_std_nisar = 2  # mm/year for 0.1~50km, 3 years TS, 12-day revisit time
+
+    # time info of NISAR
+    tbase_nisar = np.arange(int(3 * 365.25 / 12)) * 12 / 365.25
+    tdiff_sqrt_nisar = np.sqrt(np.sum((tbase_nisar - np.mean(tbase_nisar)) ** 2))
+
+    # time info of interest
+    tbase = np.arange(int(time_span * 365.25 / revisit_time)) * revisit_time / 365.25
+    tdiff_sqrt = np.sqrt(np.sum((tbase - np.mean(tbase)) ** 2))
+    los_std = los_std_nisar * tdiff_sqrt_nisar / tdiff_sqrt
+
+    if print_msg:
+        msg = f'LOS velocity STD in {time_span:.2f}-years '
+        msg += f'with {revisit_time}-day revisit: {los_std:.1f} mm/year'
+        print(msg)
+
+    return los_std
+
 
 ############################ Deformation Time-series ############################
 def velocity2timeseries(date_list, vel=0.03, display=False):
