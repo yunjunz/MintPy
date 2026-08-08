@@ -31,7 +31,7 @@ def get_relative_orbit_number(abs_orbit: int, platform: str) -> int:
     return rel_orbit
 
 
-def get_los_azimuth_angle(orb_incl, orb_dir, sat_hgt, look_dir, lat, round_flag=False):
+def get_los_azimuth_angle(orb_incl, orb_dir, sat_hgt, look_dir, lat=0, round_flag=False):
     """Get the LOS azimuth angle given the satellite parameters and ground latitude.
 
     Parameters: orb_incl     - float, orbit inclination angle in degree
