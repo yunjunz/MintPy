@@ -38,7 +38,7 @@ def create_parser(subparsers=None):
     parser.add_argument('-s','--sol','--sol-code', dest='sol_code', default='jpl',
                         choices={'cod','esa','igs','jpl','upc','uqr'},
                         help='GIM solution center code (default: %(default)s).\n'
-                             'https://cddis.nasa.gov/Data_and_Derived_Products/GNSS/atmospheric_products.html')
+                             'https://www.earthdata.nasa.gov/data/space-geodesy-techniques/gnss/atmospheric-products')
     parser.add_argument('--tec-dir', dest='tec_dir', default='${WEATHER_DIR}/IONEX',
                         help='directory of downloaded GNSS TEC data (default: %(default)s).')
 

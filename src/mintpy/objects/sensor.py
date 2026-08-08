@@ -645,6 +645,9 @@ ALOS4 = {
     'altitude'                   : 628e3,     # m, mean value
     'orbit_inclination'          : 97.9,      # deg
     'repeat_cycle'               : 14,        # day, (15-3/14 rev/day)
+    # spacecraft
+    'mass'                       : 2990,      # kg
+    'power'                      : 7000,      # Watts, EOL
     # sar / antenna
     'carrier_frequency'          : 1257.5e6,  # Hz (spotlight, 3m SM), 1236.5/1257.5/1278.5 MHz
     'antenna_length'             : 3.7,       # m
@@ -679,12 +682,15 @@ SAOCOM = {
 # end    date: operational
 # Table 1 from Wang et al. (2024, GRSM) at https://doi.org/10.1109/MGRS.2024.3478761
 # Table 1 from Liu et al. (2022, EUSAR) at https://ieeexplore.ieee.org/document/9944327
+# Table 1 from Wang et al. (2024, EUSAR) at https://ieeexplore.ieee.org/document/10659437
 # preliminary version: the azimuth bandwidth/frequency/pixelsize might change
 LT1 = {
     # orbit
     'altitude'                   : 607e3,     # m, mean value
     'orbit_inclination'          : 97.8,      # deg
     'repeat_cycle'               : 8,         # day, single satellite
+    # spacecraft
+    'duty_cycle'                 : 7.5,       # min/orbit
     # sar / antenna
     'carrier_frequency'          : 1.26e9,    # Hz
     'antenna_length'             : 9.8,       # m
@@ -731,11 +737,14 @@ UAV_L = {
 
 # NISAR
 # https://nisar.jpl.nasa.gov/system/documents/files/26_NISAR_FINAL_9-6-19.pdf
+# https://www.eoportal.org/satellite-missions/nisar
 NISAR_L = {
     # orbit
     'altitude'                   : 747e3,     # m, mean value
     'orbit_inclination'          : 98.4,      # deg
     'repeat_cycle'               : 12,        # day
+    # spacecraft
+    'mass'                       : 2800,      # kg
     # sar / antenna
     'carrier_frequency'          : 1.257e9,   # Hz
     'antenna_length'             : 12,        # m
@@ -749,6 +758,32 @@ NISAR_L = {
     'noise_equivalent_sigma_zero': -25,       # dB
     'incidence_angle'            : [34, 48],  # degrees
 }
+
+# ROSE-L
+# https://www.eoportal.org/satellite-missions/rose-l
+# RIWS: ROSE-L Interferometric Wide Swath mode as reference
+#
+ROSEL = {
+    # orbit
+    'altitude'                   : 693e3,     # m, mean value
+    'orbit_inclination'          : 97.98,     # deg
+    'repeat_cycle'               : 12,        # day
+    # spacecraft
+    'mass'                       : 2223,      # kg
+    'duty_cycle'                 : 39,        # min/orbit
+    # sar / antenna
+    'carrier_frequency'          : 1.2575e9,  # Hz
+    'antenna_length'             : 11,        # m
+    'antenna_width'              : 3.6,       # m
+    'pulse_repetition_frequency' : 1650,      # Hz
+    'chirp_bandwidth'            : 63e6,      # Hz
+    'azimuth_resolution'         : 10,        # m, ground
+    'range_resolution'           : 5,         # m, ground
+    'swath_width'                : 260e3,     # m
+    'noise_equivalent_sigma_zero': -28,       # dB
+    'incidence_angle'            : [29, 46],  # degrees
+}
+
 
 
 ##--------------------  P-band  --------------------##
@@ -798,6 +833,7 @@ SENSOR_DICT = {
     'alos2' : ALOS2,
     'alos4' : ALOS4,
     'lt1'   : LT1,
+    'rosel' : ROSEL,
     'uav'   : UAV_L,
     'ni'    : NISAR_L,
     'saocom': SAOCOM,
